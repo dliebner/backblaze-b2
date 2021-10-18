@@ -911,6 +911,66 @@ class ParallelUploader {
 
 }
 
+class DirectoryUploader extends ParallelUploader {
+
+    public $directory;
+    public $b2Path;
+
+    public function __construct($directory, $b2Path, Client $client, $bucketId, $numUploadLanes = null) {
+
+        $this->directory = $directory;
+        $this->b2Path = $b2Path;
+
+        parent::__construct($client, $bucketId, $numUploadLanes);
+        
+    }
+
+    /* Get all and recursive files list, generator */
+    protected function genDirectoryRecursive() {
+
+        $directoryIterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($this->directory),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+            \RecursiveIteratorIterator::CATCH_GET_CHILD
+        );
+
+        /** @var \DirectoryIterator $fileEntity */
+        foreach( $directoryIterator as $fileEntity ) {
+
+            $file = [
+                'fileName' => $fileEntity->getFilename(),
+                'realPath' => $fileEntity->getRealPath(),
+                'mtime'    => $fileEntity->getMTime(),
+                'isDir'    => $fileEntity->isDir()
+            ];
+
+            // Skip 'dot' folders and directories
+            if( $file['fileName'] === '.' || $file['fileName'] === '..' || $file['isDir'] ) {
+                continue;
+            }
+
+            yield $file;
+
+        }
+
+    }
+
+    public function getNextFile() {
+
+        if( $file = $this->genDirectoryRecursive() ) {
+
+            return [
+                'FileName' => $this->b2Path . $file['fileName'],
+                'LocalFile' => $file['realPath'],
+                'FileLastModified' => $file['mtime'] * 1000,
+            ];
+
+        }
+
+    }
+
+}
+
 class AsyncRequestWithRetries {
 
     public $retryLimit   = 10;
@@ -1057,7 +1117,7 @@ class AsyncUploadLane {
 
                 if( !file_exists($nextFile['LocalFile']) ) throw new \Exception("File does not exist: " . $nextFile['LocalFile']);
 
-                $nextFile['FileLastModified'] = filemtime($nextFile['LocalFile']);
+                if( !isset($nextFile['FileLastModified']) ) $nextFile['FileLastModified'] = filemtime($nextFile['LocalFile']) * 1000;
                 $nextFile['Body'] = fopen($nextFile['LocalFile'], 'r');
 
             }
