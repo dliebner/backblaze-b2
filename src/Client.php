@@ -830,7 +830,7 @@ class ParallelUploader {
     public $filesToUpload = [];
 
     /** @var AsyncUploadLane[] */
-    public $stdUploadLanes = [];
+    protected $stdUploadLanes = [];
 
     public function __construct(Client $client, $bucketId, $numUploadLanes = null) {
 
@@ -882,10 +882,16 @@ class ParallelUploader {
 
     }
 
+    public function numFilesToUpload() {
+
+        return count($this->filesToUpload);
+
+    }
+
     public function doUpload() {
 
         // Create upload lanes
-        $numUploadLanes = min(count($this->filesToUpload), $this->numUploadLanes);
+        $numUploadLanes = min($this->numFilesToUpload(), $this->numUploadLanes);
 
         $this->stdUploadLanes = [];
         $promises = [];
@@ -897,15 +903,9 @@ class ParallelUploader {
 
         }
 
-        $success = true;
+        \GuzzleHttp\Promise\Each::of($promises)->then()->wait();
 
-        \GuzzleHttp\Promise\Each::of($promises)->then(null, function(\Exception $reason) use (&$success) {
-
-            $success = false;
-
-        })->wait();
-
-        return $success ? $this->getAllUploadedFiles() : false;
+        return $this->getAllFailedFiles() ? false : $this->getAllUploadedFiles();
 
     }
 
@@ -916,13 +916,24 @@ class DirectoryUploader extends ParallelUploader {
     public $directory;
     public $b2Path;
 
+    public $fileGenerator;
+
     public function __construct($directory, $b2Path, Client $client, $bucketId, $numUploadLanes = null) {
 
         $this->directory = $directory;
-        $this->b2Path = $b2Path;
+        $this->b2Path = $b2Path . (substr($b2Path, -1) != '/' ? '/' : '');
+
+        $this->fileGenerator = $this->genDirectoryRecursive();
 
         parent::__construct($client, $bucketId, $numUploadLanes);
         
+    }
+
+    public function numFilesToUpload() {
+
+        // Unknown, so just return a large number
+        return 999999;
+
     }
 
     /* Get all and recursive files list, generator */
@@ -957,7 +968,9 @@ class DirectoryUploader extends ParallelUploader {
 
     public function getNextFile() {
 
-        if( $file = $this->genDirectoryRecursive() ) {
+        if( $file = $this->fileGenerator->current() ) {
+
+            $this->fileGenerator->next();
 
             return [
                 'FileName' => $this->b2Path . $file['fileName'],
@@ -987,6 +1000,8 @@ class AsyncRequestWithRetries {
     public $options = [];
 
     public function __construct(Client $client, $method, $uri, $options = []) {
+
+        if( defined('B2_DEBUG_ON') && B2_DEBUG_ON ) $this->debugOutput = true;
 
         $this->method = $method;
         $this->uri = $uri;
@@ -1027,7 +1042,7 @@ class AsyncRequestWithRetries {
 
         }, function(\Exception $reason) {
 
-            if( $this->debugOutput ) echo $this->uri . " failed: " . $reason->getMessage();
+            if( $this->debugOutput ) echo $this->uri . " failed: " . $reason->getMessage() . "\n";
 
             if( $reason instanceof \GuzzleHttp\Exception\BadResponseException ) {
 
