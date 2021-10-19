@@ -1022,7 +1022,7 @@ class AsyncRequestWithRetries {
             $this->options['delay'] = $this->retryWaitSec * 1000;
 
             // Wait 50% longer if it fails again
-            $this->retryWaitSec = $this->retryWaitSec * 1.5;
+            $this->retryWaitSec *= 1.5;
 
             return true;
 
