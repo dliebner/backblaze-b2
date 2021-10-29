@@ -10,25 +10,29 @@
             "name": "Chris White",
             "email": "chris@cwhite.me",
             "homepage": "https://cwhite.me"
-        }, {
+        },
+        {
             "name": "Ahmad Fikrizaman",
             "email": "fikri@runcloud.io",
             "homepage": "https://runcloud.io",
             "role": "CTO"
-        }, {
-		"name": "Ricardo Obregón",
-		"email": "ricardo@obregon.co",
-		"homepage": "http://obregonco",
-		"role": "Founder"
-	}, {
-                "name": "Rick O'Brien",
-                "email": "rick@obregon.co",
-                "homepage": "http://obregonco"
-        }, {
-        "name": "Daniel Liebner",
-        "homepage": "https://github.com/dliebner",
-        "role": "Contributor"
-    }
+        },
+        {
+            "name": "Ricardo Obregón",
+            "email": "ricardo@obregon.co",
+            "homepage": "http://obregonco",
+            "role": "Founder"
+        },
+        {
+            "name": "Rick O'Brien",
+            "email": "rick@obregon.co",
+            "homepage": "http://obregonco"
+        },
+        {
+            "name": "Daniel Liebner",
+            "homepage": "https://github.com/dliebner",
+            "role": "Contributor"
+        }
     ],
     "require": {
         "php": ">=7.0.0",
