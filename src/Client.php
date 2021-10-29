@@ -854,6 +854,7 @@ class ParallelUploader {
 
     }
 
+    /** @return AsyncUploadFileResult[] */
     public function getAllUploadedFiles() {
 
         $allUploadedFiles = [];
