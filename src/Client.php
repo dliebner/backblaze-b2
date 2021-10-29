@@ -1079,6 +1079,20 @@ class AsyncRequestWithRetries {
 
 }
 
+class AsyncUploadFileResult {
+
+    public $originalFile;
+    public $b2File;
+
+    public function __construct($originalFile, File $b2File) {
+
+        $this->originalFile = $originalFile;
+        $this->b2File = $b2File;
+        
+    }
+
+}
+
 class AsyncUploadLane {
 
     public $parallelUploader;
@@ -1170,7 +1184,7 @@ class AsyncUploadLane {
 
                 $responseObj = json_decode($response->getBody(), true);
                 
-                $this->uploadedFiles[] = new File($responseObj);
+                $this->uploadedFiles[] = new AsyncUploadFileResult($nextFile, new File($responseObj));
 
                 return $this->uploadNextFile();
                 
