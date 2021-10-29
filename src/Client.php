@@ -1093,6 +1093,7 @@ class AsyncUploadFileResult {
 
 }
 
+/** @property AsyncUploadFileResult[] $uploadedFiles */
 class AsyncUploadLane {
 
     public $parallelUploader;
