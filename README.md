@@ -1,3 +1,5 @@
+Patched version for private use, original README below:
+
 ## Backblaze B2 SDK for PHP
 [![Software License](https://img.shields.io/badge/license-LGPL-brightgreen.svg?style=flat-square)](LICENSE.md)
 [![Latest Version](https://img.shields.io/github/release/obregonco/backblaze-b2.svg?style=flat-square)](https://github.com/obregonco/backblaze-b2/releases)
