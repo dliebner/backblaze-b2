@@ -1,11 +1,11 @@
 <?php
 
-namespace obregonco\B2;
+namespace dliebner\B2;
 
-use obregonco\B2\Exceptions\CacheException;
-use obregonco\B2\Exceptions\NotFoundException;
-use obregonco\B2\Exceptions\ValidationException;
-use obregonco\B2\Http\Client as HttpClient;
+use dliebner\B2\Exceptions\CacheException;
+use dliebner\B2\Exceptions\NotFoundException;
+use dliebner\B2\Exceptions\ValidationException;
+use dliebner\B2\Http\Client as HttpClient;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Container\Container;
 use Illuminate\Filesystem\Filesystem;

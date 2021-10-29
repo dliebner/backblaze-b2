@@ -1,15 +1,15 @@
 <?php
 
-namespace obregonco\B2\Http;
+namespace dliebner\B2\Http;
 
-use obregonco\B2\ErrorHandler;
+use dliebner\B2\ErrorHandler;
 use GuzzleHttp\Client as GuzzleClient;
 use Psr\Http\Message\ResponseInterface;
 
 /**
  * Client wrapper around Guzzle.
  *
- * @package obregonco\B2\Http
+ * @package dliebner\B2\Http
  */
 class Client extends GuzzleClient
 {

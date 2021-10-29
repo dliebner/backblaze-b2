@@ -1,6 +1,6 @@
 <?php
 
-namespace obregonco\B2\Exceptions;
+namespace dliebner\B2\Exceptions;
 
 class CacheException extends \Exception
 {
