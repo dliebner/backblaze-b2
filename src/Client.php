@@ -23,7 +23,7 @@ class Client
 
     protected $authToken;
     protected $apiUrl = '';
-    protected $downloadUrl;
+    public $downloadUrl;
     protected $recommendedPartSize;
 
     protected $authorizationValues;
@@ -1193,6 +1193,186 @@ class AsyncUploadLane {
             },function(\Exception $reason) use ($nextFile) {
                 
                 if( is_resource($nextFile['Body']) ) fclose($nextFile['Body']);
+
+                $this->failedFiles[] = $nextFile;
+
+                throw $reason;
+
+            });
+
+        }
+
+    }
+
+}
+
+class ParallelDownloader {
+
+    public $client;
+
+    public $numDownloadLanes = 7;
+
+    public $filesToDownload = [];
+
+    /** @var AsyncDownloadLane[] */
+    protected $stdDownloadLanes = [];
+
+    public function __construct(Client $client, $numDownloadLanes = null) {
+
+        $this->client = $client;
+
+        if( $numDownloadLanes ) $this->numDownloadLanes = $numDownloadLanes;
+        
+    }
+
+    public function addFileToDownload($fileOptions) {
+
+        $this->filesToDownload[] = $fileOptions;
+
+    }
+
+    public function getNextFile() {
+
+        return array_shift($this->filesToDownload);
+
+    }
+
+    /** @return AsyncDownloadFileResult[] */
+    public function getAllDownloadedFiles() {
+
+        $allDownloadedFiles = [];
+
+        foreach( $this->stdDownloadLanes as $lane ) {
+
+            $allDownloadedFiles = array_merge($allDownloadedFiles, $lane->downloadedFiles);
+
+        }
+
+        return $allDownloadedFiles;
+
+    }
+
+    public function getAllFailedFiles() {
+
+        $allFailedFiles = [];
+
+        foreach( $this->stdDownloadLanes as $lane ) {
+
+            $allFailedFiles = array_merge($allFailedFiles, $lane->failedFiles);
+
+        }
+
+        return $allFailedFiles;
+
+    }
+
+    public function numFilesToDownload() {
+
+        return count($this->filesToDownload);
+
+    }
+
+    public function doDownload() {
+
+        // Create download lanes
+        $numDownloadLanes = min($this->numFilesToDownload(), $this->numDownloadLanes);
+
+        $this->stdDownloadLanes = [];
+        $promises = [];
+
+        for( $i = 0; $i < $numDownloadLanes; $i++ ) {
+
+            $this->stdDownloadLanes[] = $downloadLane = new AsyncDownloadLane($this);
+            $promises[] = $downloadLane->begin();
+
+        }
+
+        \GuzzleHttp\Promise\Each::of($promises)->then()->wait();
+
+        return $this->getAllFailedFiles() ? false : $this->getAllDownloadedFiles();
+
+    }
+
+}
+
+class AsyncDownloadFileResult {
+
+    public $originalFileOptions;
+    public $result;
+
+    public function __construct($originalFileOptions, $result) {
+
+        $this->originalFileOptions = $originalFileOptions;
+        $this->result = $result;
+        
+    }
+
+}
+
+/** @property AsyncDownloadFileResult[] $downloadedFiles */
+class AsyncDownloadLane {
+
+    public $parallelDownloader;
+
+    public $promise;
+
+    public $downloadEndpoint;
+    public $downloadAuthToken;
+
+    public $downloadedFiles = [];
+    public $failedFiles = [];
+
+    public function __construct(ParallelDownloader $parallelDownloader) {
+
+        $this->parallelDownloader = $parallelDownloader;
+
+        $this->promise = new Promise();
+        
+    }
+
+    public function begin() {
+
+        return $this->downloadNextFile();
+
+    }
+
+    protected function downloadNextFile() {
+
+        if( $nextFile = $options = $this->parallelDownloader->getNextFile() ) {
+
+            $client = $this->parallelDownloader->client;
+            
+            $requestUrl = null;
+            $requestOptions = [
+                'sink' => isset($options['SaveAs']) ? $options['SaveAs'] : fopen('php://temp', 'w'),
+            ];
+
+            if( isset($options['FileId']) ) {
+
+                $requestOptions['query'] = ['fileId' => $options['FileId']];
+                $requestUrl = $client->downloadUrl . '/b2api/v1/b2_download_file_by_id';
+
+            } else {
+
+                if( !isset($options['BucketName']) && isset($options['BucketId']) ) {
+
+                    $options['BucketName'] = $client->getBucketNameFromId($options['BucketId']);
+
+                }
+
+                $requestUrl = sprintf('%s/file/%s/%s', $client->downloadUrl, $options['BucketName'], $options['FileName']);
+
+            }
+
+            $asyncRequest = new AsyncRequestWithRetries($client, 'GET', $requestUrl, $requestOptions);
+
+            return $asyncRequest->begin()->then(function(ResponseInterface $response) use ($nextFile, $options) {
+                
+                $this->downloadedFiles[] = new AsyncDownloadFileResult($nextFile, isset($options['SaveAs']) ? true : $response->getBody());
+
+                return $this->downloadNextFile();
+                
+            }, function(\Exception $reason) use ($nextFile) {
 
                 $this->failedFiles[] = $nextFile;
 
