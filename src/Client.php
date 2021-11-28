@@ -333,7 +333,7 @@ class Client
                 $options['BucketName'] = $this->getBucketNameFromId($options['BucketId']);
             }
 
-            $requestUrl = sprintf('%s/file/%s/%s', $this->downloadUrl, $options['BucketName'], $options['FileName']);
+            $requestUrl = $this->getB2FileRequestUrl($options['BucketName'], $options['FileName']);
         }
 
         if (isset($options['stream'])) {
@@ -344,6 +344,12 @@ class Client
         }
 
         return isset($options['SaveAs']) ? true : $response;
+    }
+
+    public function getB2FileRequestUrl($b2BucketName, $b2FileName) {
+
+        return sprintf('%s/file/%s/%s', $this->downloadUrl, $b2BucketName, $b2FileName);
+
     }
 
     public function accelRedirectData(array $options)
@@ -1360,7 +1366,7 @@ class AsyncDownloadLane {
 
                 }
 
-                $requestUrl = sprintf('%s/file/%s/%s', $client->downloadUrl, $options['BucketName'], $options['FileName']);
+                $requestUrl = $client->getB2FileRequestUrl($options['BucketName'], $options['FileName']);
 
             }
 
