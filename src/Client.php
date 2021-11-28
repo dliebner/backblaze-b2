@@ -1105,8 +1105,6 @@ class AsyncUploadLane {
 
     public $parallelUploader;
 
-    public $promise;
-
     public $uploadEndpoint;
     public $uploadAuthToken;
 
@@ -1116,8 +1114,6 @@ class AsyncUploadLane {
     public function __construct(ParallelUploader $parallelUploader) {
 
         $this->parallelUploader = $parallelUploader;
-
-        $this->promise = new Promise();
         
     }
 
@@ -1320,19 +1316,12 @@ class AsyncDownloadLane {
 
     public $parallelDownloader;
 
-    public $promise;
-
-    public $downloadEndpoint;
-    public $downloadAuthToken;
-
     public $downloadedFiles = [];
     public $failedFiles = [];
 
     public function __construct(ParallelDownloader $parallelDownloader) {
 
         $this->parallelDownloader = $parallelDownloader;
-
-        $this->promise = new Promise();
         
     }
 
