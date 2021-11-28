@@ -1196,7 +1196,7 @@ class AsyncUploadLane {
 
                 $this->failedFiles[] = $nextFile;
 
-                throw $reason;
+                return $this->uploadNextFile();
 
             });
 
@@ -1376,7 +1376,7 @@ class AsyncDownloadLane {
 
                 $this->failedFiles[] = $nextFile;
 
-                throw $reason;
+                return $this->downloadNextFile();
 
             });
 
