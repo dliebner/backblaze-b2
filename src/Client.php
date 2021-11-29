@@ -1078,6 +1078,10 @@ class AsyncRequestWithRetries {
 
                 }
 
+            } else {
+
+                throw $reason;
+
             }
 
         });
