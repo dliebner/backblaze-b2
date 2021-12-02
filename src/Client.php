@@ -8,8 +8,7 @@ use dliebner\B2\Exceptions\ValidationException;
 use dliebner\B2\Http\Client as HttpClient;
 use Illuminate\Cache\CacheManager;
 use Illuminate\Container\Container;
-use Illuminate\Filesystem\Filesystem;
-use GuzzleHttp\Promise\Promise;
+use Illuminate\Redis\RedisManager;
 use Psr\Http\Message\ResponseInterface;
 
 class Client
@@ -91,15 +90,26 @@ class Client
 
     private function createCacheContainer()
     {
-        $container = new Container();
+        $container = new Container;
+
         $container['config'] = [
-            'cache.default' => 'file',
-            'cache.stores.file' => [
-                'driver' => 'file',
-                'path' => __DIR__ . '/Cache',
+            'cache.default' => 'redis',
+            'cache.stores.redis' => [
+                'driver' => 'redis',
+                'connection' => 'default'
             ],
+            'cache.prefix' => 'torch',
+            'database.redis' => [
+                'cluster' => false,
+                'default' => [
+                    'host' => '127.0.0.1',
+                    'port' => 6379,
+                    'database' => 0,
+                ],
+            ]
         ];
-        $container['files'] = new Filesystem;
+    
+        $container['redis'] = new RedisManager($container, 'phpredis', $container['config']['database.redis']);
 
         try {
             $cacheManager = new CacheManager($container);
