@@ -845,6 +845,8 @@ class ParallelUploader {
 
     public $filesToUpload = [];
 
+    public $failedUnattemptedFiles = [];
+
     /** @var AsyncUploadLane[] */
     protected $stdUploadLanes = [];
 
@@ -889,8 +891,12 @@ class ParallelUploader {
 
         $allFailedFiles = [];
 
+        // Any any files that weren't attempted to be uploaded
+        $allFailedFiles = array_merge($allFailedFiles, $this->failedUnattemptedFiles);
+
         foreach( $this->stdUploadLanes as $lane ) {
 
+            // Add failed files from each upload lane
             $allFailedFiles = array_merge($allFailedFiles, $lane->failedFiles);
 
         }
@@ -920,7 +926,16 @@ class ParallelUploader {
 
         }
 
-        \GuzzleHttp\Promise\Each::of($promises)->then()->wait();
+        // Wait for all upload lane promises to either resolve or be rejected
+        \GuzzleHttp\Promise\Utils::settle($promises)->wait();
+
+        // After all promises have settled, if there are still files to upload, mark them as failed.
+        // It means some lanes didn't start correctly.
+        if( $this->filesToUpload ) {
+
+            $this->failedUnattemptedFiles = array_slice($this->filesToUpload, 0);
+
+        }
 
         return $this->getAllFailedFiles() ? false : $this->getAllUploadedFiles();
 
