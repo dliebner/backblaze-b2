@@ -37,7 +37,7 @@
     "require": {
         "php": ">=7.0.0",
         "ext-json": "*",
-        "guzzlehttp/guzzle": "^6.5 || ^7.0",
+        "guzzlehttp/guzzle": "^6.5",
         "illuminate/cache": ">=5.1.0",
         "illuminate/container": ">=5.1.0",
         "illuminate/redis": ">=5.1.0"
